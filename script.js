@@ -1,31 +1,38 @@
-const start = document.querySelector(".start");
-const hours = document.querySelector(".hours");
-const minutesDisplay = document.querySelector(".minuts");
-const milliDisplay = document.querySelector(".millisecond");
-const secondDisplay = document.querySelector(".second");
-const reset = document.querySelector(".reset");
-const lapButton = document.querySelector(".lap");
-const lapTable = document.querySelector(".lap-time-container");
+const start = document.getElementById("start");
+const hours = document.getElementById("hours");
+const minutesDisplay = document.getElementById("minutes");
+const milliDisplay = document.getElementById("milliseconds");
+const secondDisplay = document.getElementById("seconds");
+const reset = document.getElementById("reset");
+const lapButton = document.getElementById("lap");
+const lapTable = document.getElementById("lap-time-container");
 
-let startTime = null;
-let elapsedPausedTime = 0; 
+let hoursCount = 0;
+let millisecondCount = 0;
+let secondCount = 0;
+let minutesCount = 0;
 let intervalId = null;
 let lapNumber = 0;
 let lastLapMilliseconds = 0;
-let isRunning = false; 
+let isRunning = false;
+let startTime = 0; 
+let elapsedTime = 0; 
 
 start.addEventListener("click", handleStartClick);
 reset.addEventListener("click", handleResetClick);
 lapButton.addEventListener("click", handleLapClick);
-document.querySelector(".lap").style.display = "none";
+lapButton.style.display = "none";
 hours.style.display = "none";
 
 function handleStartClick() {
   if (!isRunning) {
+    startTime = Date.now(); 
     startCounting();
     start.innerHTML = "Stop";
-    start.style.backgroundColor = "red";
-    document.querySelector(".lap").style.display = "block";
+    start.classList.add("start-active");
+    start.classList.remove("start-inactive");
+    lapButton.style.display = "block";
+    isRunning = true;
   } else {
     handleStopClick();
   }
@@ -33,29 +40,28 @@ function handleStartClick() {
 
 function startCounting() {
   if (!intervalId) {
-    isRunning = true;
-    startTime = startTime ? startTime : Date.now();
     intervalId = setInterval(updateTimer, 10);
   }
 }
 
 function updateTimer() {
-  const elapsedTime = Date.now() - startTime - elapsedPausedTime;
-  
-  let milliseconds = Math.floor((elapsedTime % 1000) / 10);
-  let seconds = Math.floor((elapsedTime / 1000) % 60);
-  let minutes = Math.floor((elapsedTime / (1000 * 60)) % 60);
-  let hoursCount = Math.floor(elapsedTime / (1000 * 60 * 60));
+  const currentTime = Date.now();
+  elapsedTime += currentTime - startTime; 
+  startTime = currentTime; 
 
-  displayTime(milliseconds, seconds, minutes, hoursCount);
+  millisecondCount = Math.floor((elapsedTime % 1000) / 10);
+  secondCount = Math.floor((elapsedTime / 1000) % 60);
+  minutesCount = Math.floor((elapsedTime / 60000) % 60);
+  hoursCount = Math.floor((elapsedTime / 3600000));
+
+  displayTime();
 }
 
-function displayTime(millisecondCount, secondCount, minutesCount, hoursCount) {
+function displayTime() {
   milliDisplay.innerHTML = formatTime(millisecondCount);
   secondDisplay.innerHTML = `${formatTime(secondCount)} :`;
   minutesDisplay.innerHTML = `${formatTime(minutesCount)} :`;
   hours.innerHTML = `${formatTime(hoursCount)} :`;
-  hours.style.display = hoursCount > 0 ? "block" : "none";
 }
 
 function formatTime(unit) {
@@ -65,27 +71,27 @@ function formatTime(unit) {
 function handleStopClick() {
   clearInterval(intervalId);
   intervalId = null;
-  isRunning = false;
   start.innerHTML = "Start";
-  start.style.cssText = "background-color: #101920; color: white";
-  document.querySelector(".lap").style.display = "none";
-  elapsedPausedTime += Date.now() - startTime;
+  start.classList.remove("start-active");
+  start.classList.add("start-inactive");
+  lapButton.style.display = "none";
+  isRunning = false;
 }
 
 function handleResetClick() {
   clearInterval(intervalId);
   intervalId = null;
-  startTime = null;
-  elapsedPausedTime = 0;
+  hoursCount = minutesCount = secondCount = millisecondCount = 0;
+  elapsedTime = 0; 
   lapNumber = lastLapMilliseconds = 0;
   lapTable.innerHTML = '';
-  isRunning = false;
   start.innerHTML = "Start";
-  start.style.backgroundColor = "black";
-  start.style.color = "white";
+  start.classList.remove("start-active");
+  start.classList.add("reset-active");
   document.querySelector(".lap-time").style.display = "none";
-  document.querySelector(".lap").style.display = "none";
-  displayTime(0, 0, 0, 0);
+  lapButton.style.display = "none";
+  displayTime();
+  isRunning = false;
 }
 
 function handleLapClick() {
@@ -99,22 +105,20 @@ function recordLap() {
   if (lapNumber === 1) {
     document.querySelector(".lap-time").style.display = "block";
   }
-
-  const elapsedTime = Date.now() - startTime - elapsedPausedTime;
+  
   const lapTimeMilliseconds = elapsedTime - lastLapMilliseconds;
   lastLapMilliseconds = elapsedTime;
-
   const lapTime = formatLapTime(lapTimeMilliseconds);
-  const totalTime = `${formatTime(minutesDisplay.innerHTML)} ${formatTime(secondDisplay.innerHTML)} ${formatTime(milliDisplay.innerHTML)}`;
-
+  const totalTime = formatTime(minutesCount) + ":" + formatTime(secondCount) + ":" + formatTime(millisecondCount);
+  
   const newRow = document.createElement("tr");
   newRow.innerHTML = `<td>${lapNumber}</td><td>${lapTime}</td><td>${totalTime}</td>`;
   lapTable.appendChild(newRow);
 }
 
 function formatLapTime(milliseconds) {
-  const lapMinutes = Math.floor((milliseconds % 3600000) / 60000);
-  const lapSeconds = Math.floor((milliseconds % 60000) / 1000);
+  const lapMinutes = Math.floor((milliseconds / 60000) % 60);
+  const lapSeconds = Math.floor((milliseconds / 1000) % 60);
   const lapMilliseconds = Math.floor((milliseconds % 1000) / 10);
   return `${formatTime(lapMinutes)}:${formatTime(lapSeconds)}:${formatTime(lapMilliseconds)}`;
 }

@@ -100,6 +100,23 @@ td {
   color: black;
 }
 
+.start-active {
+  background-color: red;
+}
+
+.start-inactive {
+  background-color: #101920;
+  color: white;
+}
+
+.reset-active {
+  background-color: black;
+  color: white;
+}
+
+
+
+
 @media screen and (max-width: 1440px) {
   .container {
     margin-top: 10%;
@@ -166,6 +183,7 @@ td {
   }
 
   .buttons div {
+    padding: 8px;
     font-size: 1.5rem;
   }
 
@@ -194,6 +212,7 @@ td {
   }
 
   .buttons div {
+    padding: 8px;
     font-size: 1.5rem;
   }
 
